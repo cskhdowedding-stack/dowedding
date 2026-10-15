@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DO WEDDING STUDIO - CRM & Quản Lý Hợp Đồng</title>
+  <style>
+    :root {
+      --bg-color: #f4f5f7;
+      --card-bg: #ffffff;
+      --primary: #7c7bad;
+      --primary-hover: #605f8a;
+      --text-main: #2c3e50;
+      --success: #2e7d32;
+      --danger: #d32f2f;
+      --border-radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; }
+
+    #loginOverlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #7c7bad; display: flex; justify-content: center; align-items: center; z-index: 1000;
+    }
+    .login-box {
+      background: white; padding: 30px; border-radius: 12px; width: 320px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2); text-align: center;
+    }
+    .login-box h2 { color: var(--primary); margin-bottom: 20px; font-size: 1.3rem; }
+    .login-box input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; }
+    .btn-login { width: 100%; background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+    .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none; }
+
+    #appContent { display: none; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0; }
+    h1 { font-size: 1.4rem; color: var(--primary); }
+    .header-right { display: flex; align-items: center; gap: 15px; }
+    .user-info { font-size: 0.9rem; font-weight: 600; }
+    .btn-logout { background: #e2e8f0; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-btn { background-color: #e2e8f0; color: var(--text-main); border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .tab-btn.active { background-color: var(--primary); color: white; }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+
+    .btn-add { background-color: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .btn-in { background-color: var(--success); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+    .btn-out { background-color: var(--danger); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+
+    .search-bar { padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; width: 280px; font-size: 0.9rem; }
+
+    .kanban-board { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; align-items: flex-start; }
+    .kanban-column { background-color: #ebecf0; min-width: 280px; width: 280px; border-radius: var(--border-radius); padding: 12px; flex-shrink: 0; min-height: 500px; display: flex; flex-direction: column; }
+    .column-header { font-weight: 700; font-size: 0.85rem; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; color: #5e6c84; text-transform: uppercase; }
+    .card-count { background-color: rgba(9, 30, 66, 0.08); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
+    
+    .card-list { min-height: 450px; flex-grow: 1; padding: 4px; border-radius: 6px; transition: background 0.2s ease; }
+    .card-list.drag-over { background-color: #dfe1e6; border: 2px dashed #a0aec0; }
+    
+    .kanban-card { background: var(--card-bg); border-radius: 6px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); position: relative; border-left: 4px solid var(--primary); cursor: grab; user-select: none; }
+    .kanban-card:active { cursor: grabbing; }
+    .kanban-card.dragging { opacity: 0.4; }
+    .kanban-card.overdue { border-left: 4px solid var(--danger); background-color: #fff5f5; }
+    
+    .card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; pointer-events: none; }
+    .card-phone { font-size: 0.85rem; color: #0066cc; text-decoration: none; display: inline-block; margin-bottom: 6px; font-weight: 600; }
+    .card-note { font-size: 0.82rem; color: #5e6c84; margin-bottom: 8px; pointer-events: none; }
+    .card-due-date { font-size: 0.75rem; color: #e53e3e; font-weight: bold; margin-bottom: 6px; pointer-events: none; }
+    .card-labels { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+    .badge-tag { background: #e2e8f0; color: #2d3748; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+    
+    .card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; border-top: 1px solid #f0f0f0; padding-top: 8px; }
+    .btn-delete { color: #de350b; background: none; border: none; cursor: pointer; font-weight: 600; }
+
+    .attendance-container, .admin-container { max-width: 1100px; margin: 0 auto; }
+    .attendance-card, .admin-card { background: white; padding: 24px; border-radius: var(--border-radius); box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px; }
+    .clock-display { font-size: 2rem; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 20px; }
+    .attendance-form { display: flex; gap: 15px; justify-content: center; align-items: center; flex-wrap: wrap; }
+    .attendance-form select { padding: 12px; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; min-width: 220px; }
+    .table-container { background: white; padding: 20px; border-radius: var(--border-radius); box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow-x: auto; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+    th { background-color: #f8fafc; color: #475569; font-weight: 700; }
+
+    .clickable-row { cursor: pointer; transition: background 0.15s ease; }
+    .clickable-row:hover { background-color: #f0f4f8 !important; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-card { background: white; padding: 18px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border-left: 4px solid var(--primary); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+    .stat-card h4 { font-size: 0.82rem; color: #718096; margin-bottom: 6px; text-transform: uppercase; }
+    .stat-card .value { font-size: 1.3rem; font-weight: 800; color: #2d3748; }
+
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    .cal-day-header { text-align: center; font-weight: bold; padding: 8px; background: #edf2f7; border-radius: 4px; font-size: 0.85rem; }
+    .cal-day { background: white; min-height: 90px; padding: 6px; border-radius: 6px; border: 1px solid #e2e8f0; }
+    .cal-day .date-num { font-weight: bold; font-size: 0.8rem; margin-bottom: 4px; color: #4a5568; }
+    .cal-event { background: #e2e8f0; border-left: 3px solid var(--primary); padding: 3px 6px; border-radius: 3px; font-size: 0.72rem; margin-bottom: 4px; cursor: pointer; }
+
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 100; overflow-y: auto; padding: 20px; }
+    .modal-content { background: white; padding: 24px; border-radius: var(--border-radius); width: 950px; max-width: 100%; max-height: 90vh; overflow-y: auto; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; font-weight: 600; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+    .quotation-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    @media(max-width: 768px) { .quotation-layout { grid-template-columns: 1fr; } }
+    .quote-box { background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
+
+    .schedule-item { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; }
+
+    .crm-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media(max-width: 768px) { .crm-detail-grid { grid-template-columns: 1fr; } }
+    .crm-tabs { display: flex; gap: 10px; border-bottom: 2px solid #e2e8f0; margin-bottom: 15px; padding-bottom: 8px; }
+    .crm-tab-btn { background: none; border: none; font-weight: bold; color: #718096; cursor: pointer; padding: 4px 8px; font-size: 0.9rem; }
+    .crm-tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+    .crm-tab-content { display: none; }
+    .crm-tab-content.active { display: block; }
+    .attachment-thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e0; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div id="loginOverlay">
+    <div class="login-box">
+      <h2>DO WEDDING STUDIO</h2>
+      <form onsubmit="handleLogin(event)">
+        <input type="text" id="loginUsername" placeholder="Tên đăng nhập" required>
+        <input type="password" id="loginPassword" placeholder="Mật khẩu" required>
+        <button type="submit" class="btn-login">Đăng Nhập</button>
+        <div id="loginError" class="login-error">Tài khoản hoặc mật khẩu không đúng!</div>
+      </form>
+    </div>
+  </div>
+
+  <div id="appContent">
+    <header>
+      <h1>DO WEDDING STUDIO</h1>
+      <div class="header-right">
+        <div class="user-info">Xin chào, <span id="currentUserName">--</span></div>
+        <button class="btn-logout" onclick="handleLogout()">Đăng xuất</button>
+      </div>
+    </header>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('crm')">Bảng CRM Sale</button>
+      <button class="tab-btn" onclick="switchTab('contracts')">Quản Lý Hợp Đồng & Báo Giá</button>
+      <button class="tab-btn" onclick="switchTab('calendar')">📅 Lịch Lên Chụp</button>
+      <button class="tab-btn" onclick="switchTab('attendance')">Điểm Danh Nhân Viên</button>
+      <button class="tab-btn admin-only" id="reportTabBtn" style="display: none;" onclick="switchTab('report')">📊 Báo Cáo Doanh Thu</button>
+      <button class="tab-btn admin-only" id="adminTabBtn" style="display: none;" onclick="switchTab('admin')">⚙️ Quản Lý Tài Khoản</button>
+    </div>
+
+    <section id="crmView" class="view-section active">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <h2>CRM - Quản Lý Thông Tin & Push Khách Hàng</h2>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input type="text" id="crmSearchInput" class="search-bar" placeholder="🔍 Tìm tên hoặc SĐT CRM..." oninput="initBoardCards()">
+          <select id="crmFilterStaff" onchange="renderBoardStructure()" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+            <option value="">-- Lọc theo Sale --</option>
+            <option value="Như">Như</option>
+            <option value="Thư">Thư</option>
+            <option value="Thi">Thi</option>
+            <option value="Quản Lý">Quản Lý</option>
+          </select>
+          <button class="btn-add" style="background-color: #4a5568;" onclick="addColumnPrompt()">+ Thêm Cột Mới</button>
+          <button class="btn-add" onclick="openCustomerModal()">+ Thêm Khách CRM</button>
+        </div>
+      </div>
+      <div class="kanban-board" id="kanbanBoard"></div>
+    </section>
+
+    <section id="contractsView" class="view-section">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <h2>Danh Sách Hợp Đồng & Báo Giá Gửi Khách</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <input type="text" id="contractSearchInput" class="search-bar" placeholder="🔍 Tìm mã HĐ, tên khách, SĐT..." oninput="renderContractsTable()">
+          <button class="btn-add" onclick="openContractModal()">+ Tạo Hợp Đồng Mới</button>
+        </div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Mã HĐ</th>
+              <th>Mã Gói</th>
+              <th>Cô Dâu & Chú Rể</th>
+              <th>Sale Chốt HĐ</th>
+              <th>SĐT Cô Dâu</th>
+              <th>Số Lịch Chụp</th>
+              <th>Tổng Tiền</th>
+              <th>Đã Thu</th>
+              <th>Còn Lại</th>
+              <th>Hành Động</th>
+            </tr>
+          </thead>
+          <tbody id="contractsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="calendarView" class="view-section">
+      <div class="table-container">
+        <div class="calendar-header">
+          <h2 id="calendarMonthTitle">Tháng 10 / 2026</h2>
+          <div>
+            <button class="tab-btn" onclick="prevMonth()">◄ Tháng Trước</button>
+            <button class="tab-btn" onclick="nextMonth()">Tháng Sau ►</button>
+          </div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </div>
+    </section>
+
+    <section id="attendanceView" class="view-section">
+      <div class="attendance-container">
+        <div class="attendance-card">
+          <div class="clock-display" id="liveClock">00:00:00</div>
+          <div class="attendance-form">
+            <select id="staffSelect">
+              <option value="">-- Chọn nhân viên --</option>
+              <option value="Như">Như</option>
+              <option value="Thư">Thư</option>
+              <option value="Thi">Thi</option>
+            </select>
+            <button class="btn-in" onclick="handleCheckIn()">Check-IN (Vào Ca)</button>
+            <button class="btn-out" onclick="handleCheckOut()">Check-OUT (Tan Ca)</button>
+          </div>
+          <div id="gpsStatus" style="text-align: center; font-size: 0.85rem; color: #666; margin-top: 10px;">📍 Sẵn sàng lấy vị trí điểm danh</div>
+        </div>
+
+        <div class="table-container">
+          <h3>Lịch Sử Điểm Danh & Vị Trí</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Nhân Viên</th>
+                <th>Giờ Vào & Vị Trí</th>
+                <th>Giờ Ra & Vị Trí</th>
+                <th>Tổng Giờ</th>
+                <th>Hành Động</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceLogs"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="reportView" class="view-section">
+      <div class="admin-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+          <h2>Báo Cáo Doanh Thu & KPI Chốt Hợp Đồng</h2>
+          <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+            <div>
+              <label style="font-weight: bold; font-size: 0.9rem; margin-right: 5px;">Chọn Tháng Chốt:</label>
+              <select id="reportFilterMonth" onchange="renderReport()" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; min-width: 150px;">
+                <option value="">-- Tất cả các tháng --</option>
+                <option value="10/2026" selected>Tháng 10 / 2026</option>
+                <option value="11/2026">Tháng 11 / 2026</option>
+                <option value="12/2026">Tháng 12 / 2026</option>
+                <option value="01/2027">Tháng 01 / 2027</option>
+                <option value="02/2027">Tháng 02 / 2027</option>
+                <option value="03/2027">Tháng 03 / 2027</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-weight: bold; font-size: 0.9rem; margin-right: 5px;">Lọc Sale:</label>
+              <select id="reportFilterStaff" onchange="renderReport()" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; min-width: 150px;">
+                <option value="">-- Tất cả Sale --</option>
+                <option value="Như">Như</option>
+                <option value="Thư">Thư</option>
+                <option value="Thi">Thi</option>
+                <option value="Quản Lý">Quản Lý</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card" style="border-left-color: #3182ce;" onclick="showStatDetailModal('leads')">
+            <h4>Số Lead Đã Nhận 🔍</h4>
+            <div class="value" id="statLeadCount">0</div>
+          </div>
+          <div class="stat-card" style="border-left-color: #805ad5;" onclick="showStatDetailModal('bookings')">
+            <h4>Số Booking (Hợp Đồng) 🔍</h4>
+            <div class="value" id="statBookingCount">0</div>
+          </div>
+          <div class="stat-card" style="border-left-color: #dd6b20;" onclick="showStatDetailModal('revenue')">
+            <h4>Tổng Doanh Thu HĐ 🔍</h4>
+            <div class="value" id="statTotalRevenue">0 đ</div>
+          </div>
+          <div class="stat-card" style="border-left-color: #38a169;" onclick="showStatDetailModal('paid')">
+            <h4>Tiền Đã Thu 🔍</h4>
+            <div class="value" id="statPaidAmount">0 đ</div>
+          </div>
+          <div class="stat-card" style="border-left-color: #e53e3e;" onclick="showStatDetailModal('remaining')">
+            <h4>Còn Lại Phải Thu 🔍</h4>
+            <div class="value" id="statRemainingAmount">0 đ</div>
+          </div>
+        </div>
+
+        <div class="table-container" style="border-left: 5px solid #805ad5; margin-bottom: 20px;">
+          <h3 id="kpiTableTitle" style="color: #805ad5; margin-bottom: 10px;">🎯 Báo Cáo KPI & Số Hợp Đồng Chốt Theo Sale (Chia đều)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Nhân Viên Sale</th>
+                <th>Số HĐ Chốt (Quy đổi)</th>
+                <th>Doanh Thu Mang Về (Đã chia)</th>
+                <th>Tiền Đã Thu (Đã chia)</th>
+                <th>Chi Tiết</th>
+              </tr>
+            </thead>
+            <tbody id="kpiStaffTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="table-container" style="border-left: 5px solid var(--primary);">
+          <h3 style="color: var(--primary); margin-bottom: 10px;">📊 Tổng Hợp Doanh Thu Theo Tất Cả Các Tháng Chốt HĐ</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Tháng Chốt HĐ</th>
+                <th>Số Hợp Đồng</th>
+                <th>Tổng Doanh Thu</th>
+                <th>Tiền Đã Thu</th>
+                <th>Còn Lại Phải Thu</th>
+                <th>Chi Tiết</th>
+              </tr>
+            </thead>
+            <tbody id="summaryByMonthBody"></tbody>
+          </table>
+        </div>
+
+        <div id="monthlyReportContainer"></div>
+      </div>
+    </section>
+
+    <section id="adminView" class="view-section">
+      <div class="admin-container">
+        <div class="admin-card">
+          <h3 style="margin-bottom: 15px;">Thêm Tài Khoản Mới</h3>
+          <form onsubmit="addUser(event)" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="newUsername" placeholder="Tên đăng nhập" required style="padding: 8px; flex: 1;">
+            <input type="text" id="newFullName" placeholder="Họ và Tên" required style="padding: 8px; flex: 1;">
+            <input type="password" id="newPassword" placeholder="Mật khẩu riêng" required style="padding: 8px; flex: 1;">
+            <select id="newRole" style="padding: 8px; width: 130px;">
+              <option value="staff">Sale (N/V)</option>
+              <option value="admin">Quản lý</option>
+            </select>
+            <button type="submit" class="btn-add">Tạo Tài Khoản</button>
+          </form>
+        </div>
+
+        <div class="admin-card" style="margin-top: 20px;">
+          <h3>Cấu Hình Google Sheets / Calendar Web App URL</h3>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="googleWebAppUrlInput" style="flex:1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <button type="button" class="btn-add" onclick="saveGoogleUrl()">Cập Nhật URL</button>
+          </div>
+        </div>
+
+        <div class="table-container" style="margin-top: 20px;">
+          <h3>Danh Sách Tài Khoản & Đổi Mật Khẩu</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Tên Đăng Nhập</th>
+                <th>Tên Nhân Viên</th>
+                <th>Vai Trò</th>
+                <th>Mật Khẩu Mới</th>
+                <th>Hành Động</th>
+              </tr>
+            </thead>
+            <tbody id="userList"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal" id="customerModal">
+    <div class="modal-content" style="width: 450px;">
+      <h3 style="margin-bottom: 15px;">Thêm Khách Hàng CRM (Follow / Push)</h3>
+      <form onsubmit="saveCustomer(event)">
+        <div class="form-group"><label>Tên Khách Hàng *</label><input type="text" id="custName" required placeholder="Nguyễn Văn A"></div>
+        <div class="form-group"><label>Số Điện Thoại *</label><input type="tel" id="custPhone" required placeholder="0901234567"></div>
+        <div class="form-group"><label>Nhu Cầu / Ghi Chú Tư Vấn</label><textarea id="custNote" rows="3" placeholder="Quan tâm gói cưới Studio..."></textarea></div>
+        <div class="form-group"><label>Hạn Liên Lạc Lại (Push Khách)</label><input type="date" id="custDueDate" required></div>
+        <div class="modal-actions">
+          <button type="button" style="padding: 8px 14px;" onclick="closeCustomerModal()">Hủy</button>
+          <button type="submit" class="btn-add">Lưu Khách CRM</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="assigneeModal">
+    <div class="modal-content" style="width: 380px;">
+      <h3 style="margin-bottom: 15px; color: var(--primary);">Ai đang lo thẻ này</h3>
+      <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">Chọn nhân sự chăm sóc (Có thể chọn nhiều người):</p>
+      <input type="hidden" id="assigneeCustId">
+      <div id="assigneeCheckboxList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; max-height: 250px; overflow-y: auto;"></div>
+      <div class="modal-actions">
+        <button type="button" style="padding: 8px 14px;" onclick="closeAssigneeModal()">Đóng</button>
+        <button type="button" class="btn-add" onclick="saveAssignees()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="detailModal">
+    <div class="modal-content" style="width: 900px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+        <h3 id="crmModalTitle" style="color: var(--primary); font-size: 1.2rem;">Chi Tiết Khách Hàng CRM</h3>
+        <button type="button" style="padding: 6px 12px;" onclick="closeDetailModal()">Đóng</button>
+      </div>
+
+      <form onsubmit="saveCustomerDetail(event)">
+        <input type="hidden" id="editCustId">
+        
+        <div class="crm-detail-grid">
+          <div>
+            <div class="form-group"><label>Tên Khách Hàng *</label><input type="text" id="editName" required></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group"><label>Số Điện Thoại *</label><input type="tel" id="editPhone" required></div>
+              <div class="form-group"><label>Email</label><input type="email" id="editEmail" placeholder="email@gmail.com"></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group"><label>Doanh Thu Dự Kiến (VNĐ)</label><input type="text" id="editExpectedRev" placeholder="12.000.000" oninput="formatCurrencyInput(this)"></div>
+              <div class="form-group"><label>Xác Suất Chốt (%)</label><input type="number" id="editProbability" min="0" max="100" placeholder="50"></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group"><label>Hạn Liên Lạc Lại (Push)</label><input type="date" id="editDueDate" required></div>
+              <div class="form-group"><label>Ngày Đóng Dự Kiến</label><input type="date" id="editExpectedCloseDate"></div>
+            </div>
+
+            <div style="margin-top: 15px;">
+              <div class="crm-tabs">
+                <button type="button" class="crm-tab-btn active" onclick="switchCrmTab('internalNote')">Ghi chú nội bộ</button>
+                <button type="button" class="crm-tab-btn" onclick="switchCrmTab('extraInfo')">Thông tin bổ sung</button>
+              </div>
+              <div id="tabInternalNote" class="crm-tab-content active">
+                <div class="form-group"><textarea id="editNote" rows="4" placeholder="Thêm mô tả / ghi chú nội bộ..."></textarea></div>
+              </div>
+              <div id="tabExtraInfo" class="crm-tab-content">
+                <div class="form-group"><textarea id="editExtraInfo" rows="4" placeholder="Nhu cầu cụ thể, địa điểm, yêu cầu váy cưới..."></textarea></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="quote-box" style="display: flex; flex-direction: column; height: 100%;">
+            <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;">Hoạt Động & Đính Kèm Hình Ảnh</h4>
+            
+            <div class="form-group">
+              <textarea id="crmActivityInput" rows="2" placeholder="Nhập nội dung trao đổi hoặc hoạt động..."></textarea>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div>
+                <label for="crmImageUpload" style="background: #edf2f7; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: inline-block; border: 1px solid #cbd5e0;">📎 Đính kèm ảnh</label>
+                <input type="file" id="crmImageUpload" accept="image/*" style="display: none;" onchange="handleImageAttachment(this)">
+              </div>
+              <button type="button" class="btn-add" style="padding: 6px 14px; font-size: 0.85rem;" onclick="addCrmActivityWithImage()">+ Thêm Hoạt Động</button>
+            </div>
+
+            <div id="attachmentPreviewContainer" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;"></div>
+
+            <div id="crmTimeline" style="flex-grow: 1; max-height: 280px; overflow-y: auto; font-size: 0.82rem; border-top: 1px solid #e2e8f0; padding-top: 10px;"></div>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px;">
+          <button type="button" style="padding: 8px 14px;" onclick="closeDetailModal()">Đóng</button>
+          <button type="submit" class="btn-add">Cập Nhật Thông Tin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="contractModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 id="modalContractTitle" style="color: var(--primary);">Tạo Hợp Đồng / Báo Giá Mới</h2>
+      </div>
+
+      <form id="contractForm" onsubmit="saveContract(event)">
+        <input type="hidden" id="contractEditId">
+        
+        <div class="quotation-layout">
+          <div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group"><label>Tên Cô Dâu *</label><input type="text" id="contractBrideName" placeholder="Nguyễn Thị Đăng" required></div>
+              <div class="form-group"><label>Tên Chú Rể</label><input type="text" id="contractGroomName" placeholder="Nguyễn Lưu Quang"></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group"><label>SĐT Cô Dâu *</label><input type="tel" id="contractBridePhone" placeholder="0901234567" required></div>
+              <div class="form-group"><label>SĐT Chú Rể</label><input type="tel" id="contractGroomPhone" placeholder="0907654321"></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group"><label>Địa Chỉ Cô Dâu</label><input type="text" id="contractBrideAddress" placeholder="Địa chỉ cô dâu..."></div>
+              <div class="form-group"><label>Địa Chỉ Chú Rể</label><input type="text" id="contractGroomAddress" placeholder="Địa chỉ chú rể..."></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
+              <div class="form-group"><label>Mã Hợp Đồng (Tự động)</label><input type="text" id="contractCode" readonly style="background:#edf2f7; font-weight:bold;"></div>
+              <div class="form-group">
+                <label>Mã Gói Chụp *</label>
+                <select id="contractPackageCode" required>
+                  <option value="PRE">PRE (Chụp Pre-Wedding)</option>
+                  <option value="WD">WD (Chụp Tiệc Cưới Wedding)</option>
+                  <option value="EXTRA">EXTRA (Chụp Phát Sinh / Ngoại Cảnh)</option>
+                  <option value="CTHUE">CTHUE (Cho Thuê Trang Phục/Studio)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" style="background: #edf2f7; padding: 10px; border-radius: 6px;">
+              <label style="color: var(--primary); font-weight: bold;">Đội Ngũ Sale Tham Gia Chốt Hợp Đồng (Tính KPI) *</label>
+              <div id="contractStaffCheckboxGroup" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 6px;"></div>
+            </div>
+
+            <div class="quote-box" style="margin-top: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="font-size: 0.9rem; color: #4a5568;">Lịch Chụp / Các Ngày Cưới (Tách Riêng Trên Lịch) *</h4>
+                <button type="button" class="btn-add" style="padding: 4px 10px; font-size: 0.8rem;" onclick="addScheduleRow()">+ Thêm Ngày Chụp</button>
+              </div>
+              <div id="schedulesContainer"></div>
+
+              <div class="form-group" style="margin-top: 10px;"><label>Tổng Giá Trị Hợp Đồng (VNĐ) *</label><input type="text" id="contractValue" required placeholder="15.000.000" oninput="formatCurrencyInput(this)"></div>
+            </div>
+
+            <div class="quote-box" style="margin-top: 10px; background: #f0fff4;">
+              <h4 style="margin-bottom: 8px; font-size: 0.9rem; color: #276749;">Chia Đợt Thanh Toán & Hình Thức Chuyển Khoản</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                <div class="form-group"><label>Đợt 1 (Cọc / Ngày Chốt) *</label><input type="text" id="payDot1" placeholder="0" value="0" oninput="formatCurrencyInput(this)"></div>
+                <div class="form-group"><label>Ngày Đợt 1 (Ngày Chốt)</label><input type="date" id="payDate1"></div>
+                <div class="form-group"><label>Hình Thức Đợt 1</label><input type="text" id="payMethod1" placeholder="CK VCB / MoMo..."></div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 5px;">
+                <div class="form-group"><label>Đợt 2 (Chụp)</label><input type="text" id="payDot2" placeholder="0" value="0" oninput="formatCurrencyInput(this)"></div>
+                <div class="form-group"><label>Ngày Đợt 2</label><input type="date" id="payDate2"></div>
+                <div class="form-group"><label>Hình Thức Đợt 2</label><input type="text" id="payMethod2" placeholder="CK VCB / Tiền mặt..."></div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 5px;">
+                <div class="form-group"><label>Đợt 3 (Thanh Lý)</label><input type="text" id="payDot3" placeholder="0" value="0" oninput="formatCurrencyInput(this)"></div>
+                <div class="form-group"><label>Ngày Đợt 3</label><input type="date" id="payDate3"></div>
+                <div class="form-group"><label>Hình Thức Đợt 3</label><input type="text" id="payMethod3" placeholder="CK / Quẹt thẻ..."></div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 10px;">
+              <label>Điều Khoản & Quy Định Hợp Đồng (Cố định chuẩn Studio)</label>
+              <textarea id="contractTerms" rows="8" readonly style="background: #edf2f7; font-size: 0.82rem; line-height: 1.4;"></textarea>
+              <div id="adminEditTermsNotice" style="font-size: 0.78rem; color: #2b6cb0; margin-top: 4px; display: none;">💡 Bạn là Quản lý: Có thể sửa điều khoản bên dưới để đồng bộ toàn hệ thống.</div>
+              <div id="adminEditTermsArea" style="margin-top: 8px; display: none;">
+                <textarea id="adminTermsInput" rows="8" style="font-size: 0.82rem; line-height: 1.4;"></textarea>
+                <button type="button" class="btn-add" style="margin-top: 6px; padding: 6px 12px; font-size: 0.8rem;" onclick="saveMasterTerms()">Lưu & Đồng bộ Điều Khoản</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="quote-box">
+            <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;">Lịch Sử Hoạt Động & Gửi Khách</h4>
+            <div class="form-group">
+              <textarea id="contractActivityNote" rows="3" placeholder="Ghi chú quá trình gửi báo giá..."></textarea>
+            </div>
+            <button type="button" class="btn-add" style="width: 100%; padding: 6px; font-size: 0.85rem;" onclick="addContractActivity()">+ Thêm Ghi Chú</button>
+            
+            <div id="contractTimeline" style="margin-top: 15px; max-height: 250px; overflow-y: auto; font-size: 0.82rem;"></div>
+          </div>
+        </div>
+
+        <!-- CÁC NÚT BẤM DƯỚI HỢP ĐỒNG -->
+        <div class="modal-actions" style="margin-top: 20px; gap: 12px;">
+          <button type="button" class="btn-add" style="background-color: #38a169;" onclick="downloadContractPDF()">📥 Tải Hợp Đồng PDF</button>
+          <button type="button" class="btn-add" style="background-color: #dd6b20;" onclick="saveAndSyncToGoogleSheet()">📅 Lên Lịch GG Sheet</button>
+          <button type="button" style="padding: 8px 14px;" onclick="closeContractModal()">Đóng</button>
+          <button type="submit" class="btn-add" style="background-color: #7c7bad;">Lưu Hợp Đồng</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="statDetailModal">
+    <div class="modal-content" style="width: 950px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+        <h3 id="statDetailTitle" style="color: var(--primary);">Chi Tiết Thông Tin Khách Hàng</h3>
+        <button type="button" style="padding: 6px 12px;" onclick="closeStatDetailModal()">Đóng</button>
+      </div>
+      <div id="statDetailContent" class="table-container" style="box-shadow: none; padding: 0;"></div>
+      <div class="modal-actions">
+        <button type="button" style="padding: 8px 14px;" onclick="closeStatDetailModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentCalYear = 2026;
+    let currentCalMonth = 9;
+
+    let kanbanColumns = JSON.parse(localStorage.getItem('crm_columns')) || [
+      { id: 'new', title: 'KHÁCH MỚI' },
+      { id: 'contacted', title: 'ĐÃ LIÊN HỆ' },
+      { id: 'called', title: 'ĐÃ GỌI' },
+      { id: 'scheduled', title: 'ĐÃ HẸN LỊCH' },
+      { id: 'met', title: 'ĐÃ GẶP TRỰC TIẾP' }
+    ];
+
+    let defaultUsers = [
+      { username: 'admin', name: 'Quản Lý', password: '1223', role: 'admin' },
+      { username: 'nhu', name: 'Như', password: '123', role: 'staff' },
+      { username: 'thu', name: 'Thư', password: '123', role: 'staff' },
+      { username: 'thi', name: 'Thi', password: '123', role: 'staff' }
+    ];
+    let users = JSON.parse(localStorage.getItem('crm_users')) || defaultUsers;
+    if (!users.some(u => u.username === 'admin')) {
+      users = defaultUsers;
+      localStorage.setItem('crm_users', JSON.stringify(users));
+    }
+
+    let currentUser = JSON.parse(sessionStorage.getItem('crm_current_user')) || null;
+    let customers = JSON.parse(localStorage.getItem('crm_customers')) || [];
+    let contracts = JSON.parse(localStorage.getItem('crm_contracts')) || [];
+    let attendanceData = JSON.parse(localStorage.getItem('crm_attendance')) || [];
+    
+    // LINK GOOGLE APPS SCRIPT WEB APP CỦA GIANG
+    let googleWebAppUrl = "https://script.google.com/macros/s/AKfycbyFmyQvxltnd2utT03WGImf3dWyZQoUaslRbU5hCsRNTsEzclpH5c4xyX3DeV67eNp_RA/exec";
+
+    const defaultMasterTerms = 
+`IV. CAM KẾT VÀ QUY ĐỊNH HỢP ĐỒNG
+1. Đặt cọc và Hủy hợp đồng: Khách hàng đặt cọc để giữ ngày và giữ chương trình ưu đãi của gói dịch vụ. Trường hợp Khách hàng đơn phương hủy hợp đồng, số tiền cọc sẽ không được hoàn lại. Nếu DO WEDDING không thực hiện dịch vụ mà không có lý do bất khả kháng (thiên tai, dịch bệnh, sự cố kỹ thuật nghiêm trọng...), DO WEDDING có trách nhiệm hoàn trả 100% số tiền Khách hàng đã thanh toán và bồi thường theo thỏa thuận hai bên.
+2. Thời hạn trả trang phục mượn/thuê: Khách hàng mượn/thuê trang phục cưới có trách nhiệm trả đúng hẹn đã thỏa thuận trên hợp đồng. Trường hợp trả trễ hạn mà không thông báo trước và được sự đồng ý của studio, mức phí phạt phát sinh sẽ tính bằng 20% giá trị thuê lẻ của trang phục đó trên mỗi ngày trễ.
+3. Trách nhiệm bảo quản và hư hại: Khách hàng có quyền và trách nhiệm kiểm tra kỹ tình trạng trang phục, phụ kiện trước khi rời khỏi studio. Trong quá trình sử dụng, nếu làm hư hại nghiêm trọng (rách sâu, cháy, dính bẩn hóa chất không thể tẩy rửa, mất form dáng gốc...), Khách hàng sẽ chịu trách nhiệm đền bù chi phí sửa chữa hoặc bồi thường theo giá trị thực tế của trang phục (dao động từ 3.000.000 VND đến 10.000.000 VND tùy theo dòng váy/vest).
+4. Chi phí đi lại và ngoại cảnh: Khách hàng chịu trách nhiệm chi trả 100% các chi phí phát sinh trực tiếp tại địa điểm bao gồm: Vé vào phim trường, vé các địa điểm chụp, chi phí xe di chuyển cho cả ekip và dâu rể, chi phí ăn uống và lưu trú (đối với các show đi tỉnh xa). Trường hợp phát sinh tách ngày, tách lễ không theo combo ban đầu, chi phí phụ thu sẽ được áp dụng theo bảng giá phát sinh hiện hành của Studio.
+Mọi nội dung trong hợp đồng này có hiệu lực kể từ khi hai bên ký kết trực tiếp tại studio hoặc Khách hàng xác nhận online (qua Zalo/Fanpage chính thức) kèm theo biên nhận chuyển khoản đợt 1 thành công. Trường hợp có tranh chấp phát sinh, hai bên ưu tiên cùng thương lượng giải quyết trên tinh thần hợp tác; nếu không thể đồng nhất ý kiến, vụ việc sẽ được phân xử theo quy định của Pháp luật Việt Nam.`;
+
+    let masterTerms = localStorage.getItem('crm_master_terms') || defaultMasterTerms;
+
+    window.onload = function() { 
+      if (currentUser) {
+        showApp();
+      } else {
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('appContent').style.display = 'none';
+      }
+    };
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('loginUsername').value.trim();
+      const p = document.getElementById('loginPassword').value.trim();
+      const user = users.find(x => x.username.toLowerCase() === u.toLowerCase() && x.password === p);
+      if (user) {
+        currentUser = user;
+        sessionStorage.setItem('crm_current_user', JSON.stringify(currentUser));
+        document.getElementById('loginError').style.display = 'none';
+        showApp();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    }
+
+    function handleLogout() { sessionStorage.removeItem('crm_current_user'); location.reload(); }
+
+    function showApp() {
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('appContent').style.display = 'block';
+      document.getElementById('currentUserName').innerText = `${currentUser.name} (${currentUser.role === 'admin' ? 'Quản lý' : 'Sale'})`;
+      
+      const adminTabs = document.querySelectorAll('.admin-only');
+      adminTabs.forEach(tab => {
+        tab.style.display = (currentUser.role === 'admin') ? 'inline-block' : 'none';
+      });
+
+      if (currentUser.role !== 'admin') {
+        document.getElementById('staffSelect').value = currentUser.name;
+      }
+      
+      if (document.getElementById('googleWebAppUrlInput')) {
+        document.getElementById('googleWebAppUrlInput').value = googleWebAppUrl;
+      }
+
+      renderBoardStructure();
+    }
+
+    function saveGoogleUrl() {
+      const url = document.getElementById('googleWebAppUrlInput').value.trim();
+      googleWebAppUrl = url;
+      localStorage.setItem('crm_google_url', url);
+      alert('Đã cập nhật Google Web App URL thành công!');
+    }
+
+    function updateClock() { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('vi-VN'); }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+      
+      if (tabName === 'crm') { 
+        document.querySelectorAll('.tab-btn')[0].classList.add('active'); 
+        document.getElementById('crmView').classList.add('active'); 
+      } else if (tabName === 'contracts') { 
+        document.querySelectorAll('.tab-btn')[1].classList.add('active'); 
+        document.getElementById('contractsView').classList.add('active'); 
+        renderContractsTable(); 
+      } else if (tabName === 'calendar') { 
+        document.querySelectorAll('.tab-btn')[2].classList.add('active'); 
+        document.getElementById('calendarView').classList.add('active'); 
+        renderCalendar(); 
+      } else if (tabName === 'attendance') { 
+        document.querySelectorAll('.tab-btn')[3].classList.add('active'); 
+        document.getElementById('attendanceView').classList.add('active'); 
+        renderAttendance(); 
+      } else if (tabName === 'report' && currentUser.role === 'admin') { 
+        document.getElementById('reportTabBtn').classList.add('active'); 
+        document.getElementById('reportView').classList.add('active'); 
+        renderReport(); 
+      } else if (tabName === 'admin' && currentUser.role === 'admin') { 
+        document.getElementById('adminTabBtn').classList.add('active'); 
+        document.getElementById('adminView').classList.add('active'); 
+        renderUsers(); 
+      }
+    }
+
+    function formatCurrencyInput(el) {
+      let val = el.value.replace(/\D/g, '');
+      if (!val) { el.value = ''; return; }
+      el.value = Number(val).toLocaleString('vi-VN');
+    }
+    function parseCurrency(str) {
+      if (!str) return 0;
+      return Number(String(str).replace(/\./g, '')) || 0;
+    }
+
+    let draggedCustId = null;
+
+    function renderBoardStructure() {
+      const board = document.getElementById('kanbanBoard');
+      board.innerHTML = '';
+      kanbanColumns.forEach(col => {
+        const columnDiv = document.createElement('div');
+        columnDiv.className = 'kanban-column';
+        columnDiv.innerHTML = `
+          <div class="column-header">
+            <span>${escapeHtml(col.title)}</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="card-count" id="count-${col.id}">0</span>
+              ${currentUser.role === 'admin' && kanbanColumns.length > 1 ? `<button onclick="deleteColumn('${col.id}')" style="border:none; background:none; color:#e53e3e; cursor:pointer; font-weight:bold;">×</button>` : ''}
+            </div>
+          </div>
+          <div class="card-list" id="list-${col.id}" data-col-id="${col.id}"></div>
+        `;
+
+        const listEl = columnDiv.querySelector('.card-list');
+        
+        listEl.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          listEl.classList.add('drag-over');
+        });
+
+        listEl.addEventListener('dragleave', () => {
+          listEl.classList.remove('drag-over');
+        });
+
+        listEl.addEventListener('drop', (e) => {
+          e.preventDefault();
+          listEl.classList.remove('drag-over');
+          if (!draggedCustId) return;
+          const cust = customers.find(c => c.id === draggedCustId);
+          if (cust) {
+            const oldStatus = cust.status;
+            const newStatus = col.id;
+            if (oldStatus !== newStatus) {
+              cust.status = newStatus;
+              const oldColObj = kanbanColumns.find(k => k.id === oldStatus);
+              const newColObj = kanbanColumns.find(k => k.id === newStatus);
+              const oldTitle = oldColObj ? oldColObj.title : oldStatus;
+              const newTitle = newColObj ? newColObj.title : newStatus;
+              
+              if (!cust.activities) cust.activities = [];
+              const now = new Date().toLocaleString('vi-VN');
+              cust.activities.unshift({
+                time: now,
+                text: `👤 <strong>${currentUser.name}</strong> đã kéo thẻ từ cột [${oldTitle}] sang cột [${newTitle}]`
+              });
+              saveAndRefreshCRM();
+            }
+          }
+        });
+
+        board.appendChild(columnDiv);
+      });
+      initBoardCards();
+    }
+
+    function initBoardCards() {
+      kanbanColumns.forEach(col => {
+        const listEl = document.getElementById(`list-${col.id}`);
+        if (listEl) listEl.innerHTML = '';
+      });
+      const counts = {};
+      kanbanColumns.forEach(col => { counts[col.id] = 0; });
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      const filterStaff = document.getElementById('crmFilterStaff') ? document.getElementById('crmFilterStaff').value : '';
+      const searchQuery = (document.getElementById('crmSearchInput') ? document.getElementById('crmSearchInput').value : '').toLowerCase().trim();
+
+      customers.forEach(cust => {
+        if (filterStaff && !(cust.assignees || []).includes(filterStaff)) return;
+        
+        if (searchQuery) {
+          const nameMatch = (cust.name || '').toLowerCase().includes(searchQuery);
+          const phoneMatch = (cust.phone || '').toLowerCase().includes(searchQuery);
+          if (!nameMatch && !phoneMatch) return;
+        }
+
+        if (!cust.status || !kanbanColumns.some(c => c.id === cust.status)) {
+          cust.status = kanbanColumns[0] ? kanbanColumns[0].id : 'new';
+        }
+        counts[cust.status]++;
+
+        const card = document.createElement('div');
+        let isOverdue = false;
+        if (cust.dueDate && cust.dueDate <= todayStr) isOverdue = true;
+
+        card.className = `kanban-card ${isOverdue ? 'overdue' : ''}`;
+        card.draggable = true;
+        card.id = `card-${cust.id}`;
+
+        card.addEventListener('dragstart', (e) => {
+          draggedCustId = cust.id;
+          e.dataTransfer.setData('text/plain', cust.id);
+          setTimeout(() => card.classList.add('dragging'), 0);
+        });
+
+        card.addEventListener('dragend', () => {
+          draggedCustId = null;
+          card.classList.remove('dragging');
+        });
+
+        card.onclick = (e) => { 
+          if (!e.target.classList.contains('btn-delete') && !e.target.classList.contains('card-phone') && !e.target.classList.contains('badge-tag')) {
+            openDetailModal(cust.id); 
+          }
+        };
+
+        const dueBadge = cust.dueDate ? `<div class="card-due-date">⏰ Hạn push: ${cust.dueDate} ${isOverdue ? '⚠️ (Đến hạn!)' : ''}</div>` : '';
+
+        let labelsHtml = '';
+        const assignees = cust.assignees || [];
+        assignees.forEach(name => {
+          labelsHtml += `<span class="badge-tag">${escapeHtml(name)}</span>`;
+        });
+        const labelsContainer = `<div class="card-labels" onclick="openAssigneeModal(event, '${cust.id}')" title="Bấm để gắn nhãn người chăm sóc">${labelsHtml || '<span class="badge-tag" style="background:#edf2f7; color:#a0aec0;">+ Gắn nhãn</span>'}</div>`;
+
+        card.innerHTML = `
+          <div class="card-title">${escapeHtml(cust.name)}</div>
+          <a href="tel:${cust.phone}" class="card-phone" onclick="event.stopPropagation()">📞 ${cust.phone}</a>
+          ${dueBadge}
+          ${labelsContainer}
+          <div class="card-note">${escapeHtml(cust.note || 'Chưa có ghi chú')}</div>
+          <div class="card-footer">
+            <span></span>
+            <button class="btn-delete" onclick="event.stopPropagation(); deleteCustomer('${cust.id}')">Xóa</button>
+          </div>
+        `;
+
+        const colList = document.getElementById(`list-${cust.status}`);
+        if (colList) colList.appendChild(card);
+      });
+
+      kanbanColumns.forEach(col => {
+        const countEl = document.getElementById(`count-${col.id}`);
+        if (countEl) countEl.innerText = counts[col.id];
+      });
+    }
+
+    function openAssigneeModal(e, custId) {
+      e.stopPropagation();
+      document.getElementById('assigneeCustId').value = custId;
+      const cust = customers.find(c => c.id === custId);
+      const currentAssignees = cust ? (cust.assignees || []) : [];
+
+      const listContainer = document.getElementById('assigneeCheckboxList');
+      listContainer.innerHTML = '';
+
+      const staffList = ['Như', 'Thư', 'Thi', 'Quản Lý'];
+      staffList.forEach(staff => {
+        const checked = currentAssignees.includes(staff) ? 'checked' : '';
+        listContainer.innerHTML += `
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer;">
+            <input type="checkbox" value="${staff}" ${checked} style="width: 16px; height: 16px;">
+            <strong>${staff}</strong>
+          </label>
+        `;
+      });
+
+      document.getElementById('assigneeModal').style.display = 'flex';
+    }
+
+    function closeAssigneeModal() { document.getElementById('assigneeModal').style.display = 'none'; }
+
+    function saveAssignees() {
+      const custId = document.getElementById('assigneeCustId').value;
+      const cust = customers.find(c => c.id === custId);
+      if (!cust) return;
+
+      const checkboxes = document.querySelectorAll('#assigneeCheckboxList input[type="checkbox"]');
+      const selected = [];
+      checkboxes.forEach(cb => {
+        if (cb.checked) selected.push(cb.value);
+      });
+
+      cust.assignees = selected;
+      saveAndRefreshCRM();
+      closeAssigneeModal();
+    }
+
+    function addColumnPrompt() {
+      const colName = prompt("Nhập tên cột mới:");
+      if (!colName || !colName.trim()) return;
+      kanbanColumns.push({ id: 'col_' + Date.now(), title: colName.trim().toUpperCase() });
+      localStorage.setItem('crm_columns', JSON.stringify(kanbanColumns));
+      renderBoardStructure();
+    }
+
+    function deleteColumn(colId) {
+      if (confirm("Xóa cột này? Khách hàng sẽ chuyển về cột đầu tiên.")) {
+        customers.forEach(c => { if (c.status === colId) c.status = kanbanColumns[0].id; });
+        kanbanColumns = kanbanColumns.filter(c => c.id !== colId);
+        localStorage.setItem('crm_columns', JSON.stringify(kanbanColumns));
+        saveAndRefreshCRM();
+      }
+    }
+
+    function openCustomerModal() { document.getElementById('customerModal').style.display = 'flex'; }
+    function closeCustomerModal() { document.getElementById('customerModal').style.display = 'none'; }
+
+    function saveCustomer(e) {
+      e.preventDefault();
+      const defaultStatus = kanbanColumns[0] ? kanbanColumns[0].id : 'new';
+      const newCust = {
+        id: Date.now().toString(),
+        name: document.getElementById('custName').value,
+        phone: document.getElementById('custPhone').value,
+        note: document.getElementById('custNote').value,
+        dueDate: document.getElementById('custDueDate').value,
+        status: defaultStatus,
+        assignees: [currentUser.name],
+        activities: [{ time: new Date().toLocaleString('vi-VN'), text: `👤 <strong>${currentUser.name}</strong> khởi tạo Lead mới.` }]
+      };
+      customers.push(newCust);
+      saveAndRefreshCRM();
+      closeCustomerModal();
+      e.target.reset();
+    }
+
+    let tempAttachedImage = null;
+
+    function switchCrmTab(tabName) {
+      document.querySelectorAll('.crm-tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.crm-tab-content').forEach(c => c.classList.remove('active'));
+      if (tabName === 'internalNote') {
+        document.querySelectorAll('.crm-tab-btn')[0].classList.add('active');
+        document.getElementById('tabInternalNote').classList.add('active');
+      } else {
+        document.querySelectorAll('.crm-tab-btn')[1].classList.add('active');
+        document.getElementById('tabExtraInfo').classList.add('active');
+      }
+    }
+
+    function openDetailModal(id) {
+      const cust = customers.find(c => c.id === id);
+      if (!cust) return;
+      document.getElementById('editCustId').value = cust.id;
+      document.getElementById('crmModalTitle').innerText = `${cust.name} - ${cust.phone}`;
+      document.getElementById('editName').value = cust.name;
+      document.getElementById('editPhone').value = cust.phone;
+      document.getElementById('editEmail').value = cust.email || '';
+      document.getElementById('editExpectedRev').value = cust.expectedRev ? Number(cust.expectedRev).toLocaleString('vi-VN') : '';
+      document.getElementById('editProbability').value = cust.probability || '';
+      document.getElementById('editDueDate').value = cust.dueDate || '';
+      document.getElementById('editExpectedCloseDate').value = cust.expectedCloseDate || '';
+      document.getElementById('editNote').value = cust.note || '';
+      document.getElementById('editExtraInfo').value = cust.extraInfo || '';
+      
+      tempAttachedImage = null;
+      document.getElementById('attachmentPreviewContainer').innerHTML = '';
+      document.getElementById('crmActivityInput').value = '';
+
+      renderCrmTimeline(cust.activities || []);
+      switchCrmTab('internalNote');
+      document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    function closeDetailModal() { document.getElementById('detailModal').style.display = 'none'; }
+
+    function handleImageAttachment(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          tempAttachedImage = e.target.result;
+          const container = document.getElementById('attachmentPreviewContainer');
+          container.innerHTML = `<img src="${tempAttachedImage}" class="attachment-thumb" title="Ảnh đính kèm">`;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function addCrmActivityWithImage() {
+      const text = document.getElementById('crmActivityInput').value.trim();
+      if (!text && !tempAttachedImage) return alert("Nhập nội dung hoạt động hoặc đính kèm ảnh!");
+      const id = document.getElementById('editCustId').value;
+      const cust = customers.find(c => c.id === id);
+      if (!cust) return;
+
+      if (!cust.activities) cust.activities = [];
+      const now = new Date().toLocaleString('vi-VN');
+      cust.activities.unshift({
+        time: now,
+        text: `👤 <strong>${currentUser.name}</strong>: ${text || 'Đính kèm hình ảnh'}`,
+        image: tempAttachedImage || null
+      });
+
+      tempAttachedImage = null;
+      document.getElementById('attachmentPreviewContainer').innerHTML = '';
+      document.getElementById('crmActivityInput').value = '';
+      document.getElementById('crmImageUpload').value = '';
+
+      renderCrmTimeline(cust.activities);
+      saveAndRefreshCRM();
+    }
+
+    function renderCrmTimeline(activities) {
+      const container = document.getElementById('crmTimeline');
+      container.innerHTML = '';
+      if (!activities || activities.length === 0) {
+        container.innerHTML = '<p style="color:#718096; text-align:center;">Chưa có hoạt động nào.</p>';
+        return;
+      }
+      activities.forEach(act => {
+        const item = document.createElement('div');
+        item.style.cssText = 'margin-bottom:10px; padding-bottom:8px; border-bottom:1px dashed #cbd5e0;';
+        let imgHtml = act.image ? `<br><img src="${act.image}" style="max-width: 150px; margin-top: 6px; border-radius: 4px; border: 1px solid #ccc;">` : '';
+        item.innerHTML = `<strong style="color: #2b6cb0;">${act.time}</strong><br>${act.text}${imgHtml}`;
+        container.appendChild(item);
+      });
+    }
+
+    function saveCustomerDetail(e) {
+      e.preventDefault();
+      const id = document.getElementById('editCustId').value;
+      const cust = customers.find(c => c.id === id);
+      if (cust) {
+        cust.name = document.getElementById('editName').value;
+        cust.phone = document.getElementById('editPhone').value;
+        cust.email = document.getElementById('editEmail').value;
+        cust.expectedRev = parseCurrency(document.getElementById('editExpectedRev').value);
+        cust.probability = Number(document.getElementById('editProbability').value) || 0;
+        cust.dueDate = document.getElementById('editDueDate').value;
+        cust.expectedCloseDate = document.getElementById('editExpectedCloseDate').value;
+        cust.note = document.getElementById('editNote').value;
+        cust.extraInfo = document.getElementById('editExtraInfo').value;
+        saveAndRefreshCRM();
+        alert("Đã cập nhật thông tin CRM thành công!");
+        closeDetailModal();
+      }
+    }
+
+    function deleteCustomer(id) {
+      if (confirm('Xóa khách hàng này khỏi CRM?')) {
+        customers = customers.filter(c => c.id !== id);
+        saveAndRefreshCRM();
+      }
+    }
+
+    function saveAndRefreshCRM() {
+      localStorage.setItem('crm_customers', JSON.stringify(customers));
+      initBoardCards();
+    }
+
+    function generateNextContractCode() {
+      if (contracts.length === 0) return "HD001";
+      let maxNum = 0;
+      contracts.forEach(c => {
+        if (c.contractCode && c.contractCode.startsWith("HD")) {
+          let num = parseInt(c.contractCode.replace("HD", ""), 10);
+          if (!isNaN(num) && num > maxNum) maxNum = num;
+        }
+      });
+      return "HD" + String(maxNum + 1).padStart(3, '0');
+    }
+
+    function addScheduleRow(date = '', desc = '') {
+      const container = document.getElementById('schedulesContainer');
+      const div = document.createElement('div');
+      div.className = 'schedule-item';
+      div.innerHTML = `
+        <input type="date" class="sched-date" value="${date}" required style="width: 140px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+        <input type="text" class="sched-desc" value="${escapeHtml(desc)}" placeholder="Ghi chú lịch (VD: Chụp Pre-wedding tại Studio / Tiệc cưới nhà gái...)" required style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+        <button type="button" onclick="this.parentElement.remove()" style="border:none; background:none; color:#e53e3e; cursor:pointer; font-weight:bold; font-size:1.1rem;">×</button>
+      `;
+      container.appendChild(div);
+    }
+
+    let activeContractActivities = [];
+
+    function openContractModal(id = null) {
+      masterTerms = localStorage.getItem('crm_master_terms') || defaultMasterTerms;
+      document.getElementById('contractTerms').value = masterTerms;
+
+      if (currentUser.role === 'admin') {
+        document.getElementById('adminEditTermsNotice').style.display = 'block';
+        document.getElementById('adminEditTermsArea').style.display = 'block';
+        document.getElementById('adminTermsInput').value = masterTerms;
+      } else {
+        document.getElementById('adminEditTermsNotice').style.display = 'none';
+        document.getElementById('adminEditTermsArea').style.display = 'none';
+      }
+
+      const staffContainer = document.getElementById('contractStaffCheckboxGroup');
+      staffContainer.innerHTML = '';
+      const allStaffs = ['Như', 'Thư', 'Thi', 'Quản Lý'];
+
+      if (id) {
+        const c = contracts.find(x => x.id === id);
+        if (!c) return;
+        document.getElementById('contractEditId').value = c.id;
+        document.getElementById('modalContractTitle').innerText = "Sửa Hợp Đồng / Báo Giá";
+        document.getElementById('contractBrideName').value = c.brideName || '';
+        document.getElementById('contractGroomName').value = c.groomName || '';
+        document.getElementById('contractBridePhone').value = c.bridePhone || '';
+        document.getElementById('contractGroomPhone').value = c.groomPhone || '';
+        document.getElementById('contractBrideAddress').value = c.brideAddress || '';
+        document.getElementById('contractGroomAddress').value = c.groomAddress || '';
+        document.getElementById('contractCode').value = c.contractCode;
+        document.getElementById('contractPackageCode').value = c.packageCode || 'PRE';
+        document.getElementById('contractValue').value = Number(c.value || 0).toLocaleString('vi-VN');
+        document.getElementById('payDot1').value = Number(c.payDot1 || 0).toLocaleString('vi-VN');
+        document.getElementById('payDate1').value = c.payDate1 || '';
+        document.getElementById('payMethod1').value = c.payMethod1 || '';
+        document.getElementById('payDot2').value = Number(c.payDot2 || 0).toLocaleString('vi-VN');
+        document.getElementById('payDate2').value = c.payDate2 || '';
+        document.getElementById('payMethod2').value = c.payMethod2 || '';
+        document.getElementById('payDot3').value = Number(c.payDot3 || 0).toLocaleString('vi-VN');
+        document.getElementById('payDate3').value = c.payDate3 || '';
+        document.getElementById('payMethod3').value = c.payMethod3 || '';
+
+        const selectedStaffs = Array.isArray(c.assigneeStaffs) ? c.assigneeStaffs : (c.assigneeStaff ? [c.assigneeStaff] : []);
+        allStaffs.forEach(st => {
+          const isChecked = selectedStaffs.includes(st) ? 'checked' : '';
+          staffContainer.innerHTML += `
+            <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer;">
+              <input type="checkbox" class="contract-staff-cb" value="${st}" ${isChecked} style="width: 16px; height: 16px;">
+              ${st}
+            </label>
+          `;
+        });
+
+        document.getElementById('schedulesContainer').innerHTML = '';
+        if (c.schedules && c.schedules.length > 0) {
+          c.schedules.forEach(s => addScheduleRow(s.date, s.desc));
+        } else {
+          addScheduleRow(c.shootDate || '', c.productDesc || '');
+        }
+
+        activeContractActivities = c.activities ? [...c.activities] : [];
+        renderContractTimeline(activeContractActivities);
+      } else {
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('contractEditId').value = '';
+        document.getElementById('modalContractTitle').innerText = "Tạo Hợp Đồng / Báo Giá Mới";
+        document.getElementById('contractBrideName').value = '';
+        document.getElementById('contractGroomName').value = '';
+        document.getElementById('contractBridePhone').value = '';
+        document.getElementById('contractGroomPhone').value = '';
+        document.getElementById('contractBrideAddress').value = '';
+        document.getElementById('contractGroomAddress').value = '';
+        document.getElementById('contractCode').value = generateNextContractCode();
+        document.getElementById('contractPackageCode').value = 'PRE';
+        document.getElementById('contractValue').value = '';
+        document.getElementById('payDot1').value = '0';
+        document.getElementById('payDate1').value = todayStr;
+        document.getElementById('payMethod1').value = '';
+        document.getElementById('payDot2').value = '0';
+        document.getElementById('payDate2').value = '';
+        document.getElementById('payMethod2').value = '';
+        document.getElementById('payDot3').value = '0';
+        document.getElementById('payDate3').value = '';
+        document.getElementById('payMethod3').value = '';
+
+        allStaffs.forEach(st => {
+          const isChecked = (currentUser.name === st) ? 'checked' : '';
+          staffContainer.innerHTML += `
+            <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer;">
+              <input type="checkbox" class="contract-staff-cb" value="${st}" ${isChecked} style="width: 16px; height: 16px;">
+              ${st}
+            </label>
+          `;
+        });
+
+        document.getElementById('schedulesContainer').innerHTML = '';
+        addScheduleRow('', '');
+
+        activeContractActivities = [{ time: new Date().toLocaleString('vi-VN'), text: `👤 <strong>${currentUser.name}</strong> tạo hợp đồng mới.` }];
+        renderContractTimeline(activeContractActivities);
+      }
+      document.getElementById('contractModal').style.display = 'flex';
+    }
+
+    function closeContractModal() { document.getElementById('contractModal').style.display = 'none'; }
+
+    function saveMasterTerms() {
+      if (currentUser.role !== 'admin') return alert('Chỉ có quản lý mới được chỉnh sửa điều khoản!');
+      const newTerms = document.getElementById('adminTermsInput').value.trim();
+      if (!newTerms) return alert('Nội dung điều khoản không được để trống!');
+      masterTerms = newTerms;
+      localStorage.setItem('crm_master_terms', masterTerms);
+      document.getElementById('contractTerms').value = masterTerms;
+      alert('Đã cập nhật và đồng bộ điều khoản thành công cho toàn bộ hệ thống!');
+    }
+
+    function renderContractTimeline(activities) {
+      const container = document.getElementById('contractTimeline');
+      container.innerHTML = '';
+      if (!activities || activities.length === 0) {
+        container.innerHTML = '<p style="color:#718096; text-align:center;">Chưa có ghi chú nào.</p>';
+        return;
+      }
+      activities.forEach(act => {
+        const item = document.createElement('div');
+        item.style.cssText = 'margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #cbd5e0;';
+        item.innerHTML = `<strong>${act.time}</strong><br>${act.text}`;
+        container.appendChild(item);
+      });
+    }
+
+    function addContractActivity() {
+      const text = document.getElementById('contractActivityNote').value.trim();
+      if (!text) return alert("Nhập nội dung ghi chú!");
+      const now = new Date().toLocaleString('vi-VN');
+      activeContractActivities.unshift({
+        time: now,
+        text: `👤 <strong>${currentUser.name}</strong>: ${escapeHtml(text)}`
+      });
+      renderContractTimeline(activeContractActivities);
+      document.getElementById('contractActivityNote').value = '';
+    }
+
+    // HÀM XỬ LÝ LƯU NỘI BỘ
+    function processSaveContractData() {
+      const editId = document.getElementById('contractEditId').value;
+      const brideName = document.getElementById('contractBrideName').value.trim();
+      const groomName = document.getElementById('contractGroomName').value.trim();
+      const bridePhone = document.getElementById('contractBridePhone').value.trim();
+
+      if (!brideName || !bridePhone) {
+        alert("Vui lòng điền đầy đủ Tên Cô Dâu và Số Điện Thoại!");
+        return null;
+      }
+
+      const val = parseCurrency(document.getElementById('contractValue').value);
+      const d1 = parseCurrency(document.getElementById('payDot1').value);
+      const d2 = parseCurrency(document.getElementById('payDot2').value);
+      const d3 = parseCurrency(document.getElementById('payDot3').value);
+
+      const staffCbs = document.querySelectorAll('.contract-staff-cb');
+      const selectedStaffs = [];
+      staffCbs.forEach(cb => { if (cb.checked) selectedStaffs.push(cb.value); });
+      if (selectedStaffs.length === 0) {
+        alert("Vui lòng chọn ít nhất 1 nhân viên Sale chốt hợp đồng!");
+        return null;
+      }
+
+      const schedItems = document.querySelectorAll('.schedule-item');
+      const schedules = [];
+      schedItems.forEach(item => {
+        const date = item.querySelector('.sched-date').value;
+        const desc = item.querySelector('.sched-desc').value;
+        if (date && desc) {
+          schedules.push({ date, desc });
+        }
+      });
+      if (schedules.length === 0) {
+        alert("Vui lòng thêm ít nhất 1 ngày chụp!");
+        return null;
+      }
+
+      const contractCode = document.getElementById('contractCode').value;
+      const packageCode = document.getElementById('contractPackageCode').value;
+
+      const data = {
+        id: editId ? editId : Date.now().toString(),
+        brideName: brideName,
+        groomName: groomName,
+        bridePhone: bridePhone,
+        groomPhone: document.getElementById('contractGroomPhone').value,
+        brideAddress: document.getElementById('contractBrideAddress').value,
+        groomAddress: document.getElementById('contractGroomAddress').value,
+        contractCode: contractCode,
+        packageCode: packageCode,
+        assigneeStaffs: selectedStaffs,
+        schedules: schedules,
+        shootDate: schedules[0].date,
+        productDesc: schedules[0].desc,
+        value: val,
+        payDot1: d1,
+        payDate1: document.getElementById('payDate1').value || new Date().toISOString().split('T')[0],
+        payMethod1: document.getElementById('payMethod1').value,
+        payDot2: d2,
+        payDate2: document.getElementById('payDate2').value,
+        payMethod2: document.getElementById('payMethod2').value,
+        payDot3: d3,
+        payDate3: document.getElementById('payDate3').value,
+        payMethod3: document.getElementById('payMethod3').value,
+        paid: d1 + d2 + d3,
+        terms: masterTerms,
+        activities: activeContractActivities
+      };
+
+      if (editId) {
+        const index = contracts.findIndex(x => x.id === editId);
+        if (index !== -1) contracts[index] = data;
+      } else {
+        contracts.push(data);
+      }
+
+      localStorage.setItem('crm_contracts', JSON.stringify(contracts));
+      renderContractsTable();
+      renderCalendar();
+      return data;
+    }
+
+    // 1. NÚT "LƯU HỢP ĐỒNG" (LƯU NỘI BỘ)
+    function saveContract(e) {
+      if (e) e.preventDefault();
+      const savedData = processSaveContractData();
+      if (savedData) {
+        alert("Đã lưu hợp đồng thành công!");
+        closeContractModal();
+      }
+    }
+
+    // 2. NÚT "📅 LÊN LỊCH GG SHEET" (LƯU NỘI BỘ + ĐẨY SANG GOOGLE SHEETS & GOOGLE CALENDAR)
+    function saveAndSyncToGoogleSheet() {
+      const savedData = processSaveContractData();
+      if (!savedData) return;
+
+      const customerName = savedData.groomName ? `${savedData.brideName} - ${savedData.groomName}` : savedData.brideName;
+
+      if (googleWebAppUrl) {
+        const payload = {
+          contractCode: savedData.contractCode,
+          packageCode: savedData.packageCode,
+          customerName: customerName,
+          customerPhone: savedData.bridePhone,
+          schedules: savedData.schedules
+        };
+
+        fetch(googleWebAppUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(() => {
+          console.log("Đã gửi yêu cầu đẩy lịch sang Google.");
+        }).catch(err => console.error("Lỗi đồng bộ Google:", err));
+      }
+
+      alert(`Đã lưu và đẩy lịch lên Google Sheets & Google Calendar thành công!\n\nTên hiển thị trên lịch: ${savedData.contractCode} ${savedData.packageCode}: ${customerName}`);
+      closeContractModal();
+    }
+
+    function downloadContractPDF() {
+      const bride = document.getElementById('contractBrideName').value || '...';
+      const groom = document.getElementById('contractGroomName').value || '...';
+      const code = document.getElementById('contractCode').value || 'HD';
+      const pkg = document.getElementById('contractPackageCode').value;
+      const val = document.getElementById('contractValue').value || '0';
+      const d1 = document.getElementById('payDot1').value || '0';
+      const m1 = document.getElementById('payMethod1').value || '';
+      const d2 = document.getElementById('payDot2').value || '0';
+      const m2 = document.getElementById('payMethod2').value || '';
+      const d3 = document.getElementById('payDot3').value || '0';
+      const m3 = document.getElementById('payMethod3').value || '';
+      const terms = document.getElementById('contractTerms').value;
+
+      const schedItems = document.querySelectorAll('.schedule-item');
+      let schedHtml = '';
+      schedItems.forEach((item, idx) => {
+        const date = item.querySelector('.sched-date').value || '--';
+        const desc = item.querySelector('.sched-desc').value || '';
+        schedHtml += `<p>• <strong>Ngày ${idx+1} (${date}):</strong> ${desc}</p>`;
+      });
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>Hợp Đồng - ${code} - ${bride} & ${groom}</title>
+          <style>
+            body { font-family: DejaVu Sans, Arial, sans-serif; padding: 25px; color: #2c3e50; line-height: 1.5; font-size: 13px; }
+            h2, h3 { text-align: center; color: #7c7bad; margin-bottom: 5px; }
+            .studio-title { text-align: center; font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; }
+            .section { margin-bottom: 15px; }
+            .section-title { font-weight: bold; background: #f4f5f7; padding: 6px 10px; border-left: 4px solid #7c7bad; margin-bottom: 8px; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
+            .terms { white-space: pre-wrap; font-size: 11.5px; background: #fafafa; padding: 10px; border: 1px solid #eee; }
+            .signatures { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="studio-title">DO WEDDING STUDIO</div>
+          <h2>HỢP ĐỒNG DỊCH VỤ CƯỚI</h2>
+          <p style="text-align: center; font-size: 0.9rem; margin-bottom: 20px;">Mã hợp đồng: <strong>${code}</strong></p>
+          
+          <div class="section">
+            <div class="section-title">I. THÔNG TIN KHÁCH HÀNG</div>
+            <div class="grid">
+              <div>Cô dâu: <strong>${bride}</strong><br>SĐT: ${document.getElementById('contractBridePhone').value || '...'}</div>
+              <div>Chú rể: <strong>${groom}</strong><br>SĐT: ${document.getElementById('contractGroomPhone').value || '...'}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">II. GÓI DỊCH VỤ & LỊCH CHỤP</div>
+            <p>Mã gói: <strong>${pkg}</strong></p>
+            ${schedHtml}
+          </div>
+
+          <div class="section">
+            <div class="section-title">III. THANH TOÁN</div>
+            <p>Tổng giá trị: <strong>${val} VNĐ</strong></p>
+            <p>Đợt 1 (Cọc): ${d1} VNĐ (${m1}) | Đợt 2: ${d2} VNĐ (${m2}) | Đợt 3: ${d3} VNĐ (${m3})</p>
+          </div>
+
+          <div class="section">
+            <div class="section-title">IV. ĐIỀU KHOẢN VÀ QUY ĐỊNH</div>
+            <div class="terms">${terms}</div>
+          </div>
+
+          <div class="signatures">
+            <div>DO WEDDING<br><br><br>(Ký tên)</div>
+            <div>KHÁCH HÀNG<br><br><br>(Ký tên)</div>
+          </div>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => { printWindow.print(); }, 500);
+    }
+
+    function renderContractsTable() {
+      const tbody = document.getElementById('contractsTableBody');
+      tbody.innerHTML = '';
+      const query = (document.getElementById('contractSearchInput') ? document.getElementById('contractSearchInput').value : '').toLowerCase().trim();
+
+      let filtered = contracts.filter(c => {
+        if (!query) return true;
+        const codeMatch = (c.contractCode || '').toLowerCase().includes(query);
+        const brideMatch = (c.brideName || '').toLowerCase().includes(query);
+        const groomMatch = (c.groomName || '').toLowerCase().includes(query);
+        const phoneMatch = (c.bridePhone || '').toLowerCase().includes(query) || (c.groomPhone || '').toLowerCase().includes(query);
+        return codeMatch || brideMatch || groomMatch || phoneMatch;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Không tìm thấy hợp đồng nào phù hợp.</td></tr>';
+        return;
+      }
+
+      filtered.forEach(c => {
+        const bride = c.brideName ? escapeHtml(c.brideName) : '...';
+        const groom = c.groomName ? escapeHtml(c.groomName) : '...';
+        const coupleDisplay = groom ? `${bride} - ${groom}` : bride;
+        const totalVal = Number(c.value || 0);
+        const paidVal = Number(c.paid || (Number(c.payDot1||0)+Number(c.payDot2||0)+Number(c.payDot3||0)));
+        const remainVal = totalVal - paidVal;
+
+        const staffList = Array.isArray(c.assigneeStaffs) ? c.assigneeStaffs.join(', ') : (c.assigneeStaff || '--');
+        const schedCount = (c.schedules && c.schedules.length > 0) ? c.schedules.length : 1;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${c.contractCode}</strong></td>
+          <td><span style="background:#edf2f7; padding:2px 6px; border-radius:4px; font-weight:bold;">${c.packageCode || 'PRE'}</span></td>
+          <td>${coupleDisplay}</td>
+          <td><span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:0.8rem;">${escapeHtml(staffList)}</span></td>
+          <td>${c.bridePhone || '...'}</td>
+          <td><span style="color:#2b6cb0; font-weight:bold;">${schedCount} ngày</span></td>
+          <td style="font-weight:bold;">${totalVal.toLocaleString('vi-VN')} đ</td>
+          <td style="color:var(--success); font-weight:bold;">${paidVal.toLocaleString('vi-VN')} đ</td>
+          <td style="color:var(--danger); font-weight:bold;">${remainVal.toLocaleString('vi-VN')} đ</td>
+          <td>
+            <button class="btn-add" style="padding: 4px 8px; font-size:0.8rem;" onclick="openContractModal('${c.id}')">Sửa</button>
+            <button class="btn-delete" style="margin-left: 6px;" onclick="deleteContract('${c.id}')">Xóa</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function deleteContract(id) {
+      if (confirm("Xóa hợp đồng này? Lịch lên chụp cũng sẽ bị gỡ.")) {
+        contracts = contracts.filter(x => x.id !== id);
+        localStorage.setItem('crm_contracts', JSON.stringify(contracts));
+        renderContractsTable();
+        renderCalendar();
+      }
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      document.getElementById('calendarMonthTitle').innerText = `Tháng ${currentCalMonth + 1} / ${currentCalYear}`;
+
+      const daysOfWeek = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+      daysOfWeek.forEach(d => {
+        const header = document.createElement('div');
+        header.className = 'cal-day-header';
+        header.innerText = d;
+        grid.appendChild(header);
+      });
+
+      const firstDay = new Date(currentCalYear, currentCalMonth, 1).getDay();
+      const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-day';
+        empty.style.background = '#f7fafc';
+        grid.appendChild(empty);
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayCell = document.createElement('div');
+        dayCell.className = 'cal-day';
+        dayCell.innerHTML = `<div class="date-num">${day}</div>`;
+
+        const monthStr = String(currentCalMonth + 1).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        const matchDate = `${currentCalYear}-${monthStr}-${dayStr}`;
+
+        contracts.forEach(ev => {
+          const scheds = ev.schedules || [{ date: ev.shootDate, desc: ev.productDesc }];
+          scheds.forEach((s, idx) => {
+            if (s.date === matchDate) {
+              const evDiv = document.createElement('div');
+              evDiv.className = 'cal-event';
+              const bName = ev.brideName || '...';
+              const gName = ev.groomName || '';
+              const customerName = gName ? `${bName} - ${gName}` : bName;
+              
+              const titleText = `${ev.contractCode} ${ev.packageCode || 'PRE'}: ${customerName}`;
+              
+              evDiv.innerHTML = `<strong>${escapeHtml(titleText)}</strong><br><span style="font-size:0.68rem; color:#2b6cb0; font-weight:bold;">[Ngày ${idx+1}]</span> <span style="font-size:0.68rem; color:#4a5568;">${escapeHtml(s.desc || '')}</span>`;
+              evDiv.onclick = () => openContractModal(ev.id);
+              dayCell.appendChild(evDiv);
+            }
+          });
+        });
+
+        grid.appendChild(dayCell);
+      }
+    }
+
+    function prevMonth() {
+      currentCalMonth--;
+      if (currentCalMonth < 0) { currentCalMonth = 11; currentCalYear--; }
+      renderCalendar();
+    }
+    function nextMonth() {
+      currentCalMonth++;
+      if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; }
+      renderCalendar();
+    }
+
+    function renderReport() {
+      const filterStaff = document.getElementById('reportFilterStaff').value;
+      const filterMonth = document.getElementById('reportFilterMonth').value;
+      
+      document.getElementById('kpiTableTitle').innerText = filterMonth ? `🎯 Báo Cáo KPI & Số Hợp Đồng Chốt Theo Sale (${filterMonth}) - Đã chia đều` : `🎯 Báo Cáo KPI & Số Hợp Đồng Chốt Theo Sale (Tất Cả Các Tháng) - Đã chia đều`;
+
+      let totalRev = 0;
+      let totalPaid = 0;
+      let totalLeads = customers.length;
+      let totalBookings = 0;
+
+      const groups = {};
+      const staffKpi = {};
+      ['Như', 'Thư', 'Thi', 'Quản Lý'].forEach(st => {
+        staffKpi[st] = { count: 0, revenue: 0, paid: 0 };
+      });
+
+      contracts.forEach(c => {
+        const staffList = Array.isArray(c.assigneeStaffs) && c.assigneeStaffs.length > 0 ? c.assigneeStaffs : [c.assigneeStaff || 'Quản Lý'];
+        const numSales = staffList.length;
+
+        const closeDate = c.payDate1 || c.shootDate;
+        let monthKey = "Chưa có ngày chốt";
+        let monthNumStr = "";
+
+        if (closeDate) {
+          const parts = closeDate.split('-');
+          if (parts.length === 3) {
+            monthKey = `Tháng ${parts[1]} / ${parts[0]}`;
+            monthNumStr = `${parts[1]}/${parts[0]}`;
+          }
+        }
+
+        const matchMonthFilter = !filterMonth || monthNumStr === filterMonth;
+
+        const val = Number(c.value || 0);
+        const d1 = Number(c.payDot1 || 0);
+        const d2 = Number(c.payDot2 || 0);
+        const d3 = Number(c.payDot3 || 0);
+        const paid = d1 + d2 + d3;
+
+        if (matchMonthFilter) {
+          const splitCount = 1 / numSales;
+          const splitRev = val / numSales;
+          const splitPaid = paid / numSales;
+
+          staffList.forEach(st => {
+            if (!staffKpi[st]) staffKpi[st] = { count: 0, revenue: 0, paid: 0 };
+            staffKpi[st].count += splitCount;
+            staffKpi[st].revenue += splitRev;
+            staffKpi[st].paid += splitPaid;
+          });
+        }
+
+        if (filterStaff && !staffList.includes(filterStaff)) return;
+
+        totalBookings++;
+        totalRev += val;
+        totalPaid += paid;
+
+        if (!groups[monthKey]) groups[monthKey] = [];
+        groups[monthKey].push({ ...c, paid, remain: val - paid });
+      });
+
+      document.getElementById('statLeadCount').innerText = totalLeads;
+      document.getElementById('statBookingCount').innerText = totalBookings;
+      document.getElementById('statTotalRevenue').innerText = totalRev.toLocaleString('vi-VN') + ' đ';
+      document.getElementById('statPaidAmount').innerText = totalPaid.toLocaleString('vi-VN') + ' đ';
+      document.getElementById('statRemainingAmount').innerText = (totalRev - totalPaid).toLocaleString('vi-VN') + ' đ';
+
+      const kpiTbody = document.getElementById('kpiStaffTableBody');
+      kpiTbody.innerHTML = '';
+      Object.keys(staffKpi).forEach(st => {
+        if (filterStaff && st !== filterStaff) return;
+        const data = staffKpi[st];
+        let displayCount = "0 HĐ";
+        if (data.count > 0) {
+          displayCount = Number.isInteger(data.count) ? `${data.count} HĐ` : `${data.count.toFixed(2)} HĐ`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'clickable-row';
+        tr.onclick = () => showStatDetailModal('staff_kpi', st);
+        tr.innerHTML = `
+          <td><strong>${st}</strong></td>
+          <td><span style="background:#e9d8fd; color:#553c9a; padding:3px 8px; border-radius:12px; font-weight:bold;">${displayCount}</span></td>
+          <td style="font-weight:bold; color:#2b6cb0;">${Math.round(data.revenue).toLocaleString('vi-VN')} đ</td>
+          <td style="font-weight:bold; color:var(--success);">${Math.round(data.paid).toLocaleString('vi-VN')} đ</td>
+          <td><button class="btn-add" style="padding:4px 8px; font-size:0.75rem;">🔍 Xem danh sách</button></td>
+        `;
+        kpiTbody.appendChild(tr);
+      });
+
+      const summaryBody = document.getElementById('summaryByMonthBody');
+      summaryBody.innerHTML = '';
+      const sortedMonths = Object.keys(groups).sort();
+
+      if (sortedMonths.length === 0) {
+        summaryBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Chưa có dữ liệu báo cáo.</td></tr>';
+      } else {
+        sortedMonths.forEach(mKey => {
+          const mList = groups[mKey];
+          let mRev = 0, mPaid = 0;
+          mList.forEach(item => {
+            mRev += item.value;
+            mPaid += item.paid;
+          });
+          const mRemain = mRev - mPaid;
+
+          const tr = document.createElement('tr');
+          tr.className = 'clickable-row';
+          tr.onclick = () => showStatDetailModal('month_group', mKey);
+          tr.innerHTML = `
+            <td><strong style="color:var(--primary);">${mKey}</strong></td>
+            <td><strong>${mList.length}</strong> hợp đồng</td>
+            <td style="font-weight:bold; color:#2b6cb0;">${mRev.toLocaleString('vi-VN')} đ</td>
+            <td style="font-weight:bold; color:var(--success);">${mPaid.toLocaleString('vi-VN')} đ</td>
+            <td style="font-weight:bold; color:var(--danger);">${mRemain.toLocaleString('vi-VN')} đ</td>
+            <td><button class="btn-add" style="padding:4px 8px; font-size:0.75rem;">🔍 Xem chi tiết</button></td>
+          `;
+          summaryBody.appendChild(tr);
+        });
+      }
+
+      const container = document.getElementById('monthlyReportContainer');
+      container.innerHTML = '';
+
+      sortedMonths.forEach((monthKey, idx) => {
+        const list = groups[monthKey];
+        let mTotalRev = 0;
+        let mTotalPaid = 0;
+
+        let rowsHtml = '';
+        list.forEach(c => {
+          mTotalRev += c.value;
+          mTotalPaid += c.paid;
+          const bName = c.brideName || '...';
+          const gName = c.groomName || '...';
+          const staffList = Array.isArray(c.assigneeStaffs) ? c.assigneeStaffs.join(', ') : (c.assigneeStaff || '--');
+
+          rowsHtml += `
+            <tr class="clickable-row" onclick="openContractModal('${c.id}')" title="Bấm vào để xem / chỉnh sửa hợp đồng">
+              <td><strong>${c.contractCode}</strong></td>
+              <td><span style="background:#edf2f7; padding:2px 6px; border-radius:4px;">${c.packageCode || 'PRE'}</span></td>
+              <td>${escapeHtml(bName)} - ${escapeHtml(gName)}</td>
+              <td>${escapeHtml(staffList)}</td>
+              <td>${c.payDate1 || c.shootDate || '--'}</td>
+              <td style="font-weight:bold;">${c.value.toLocaleString('vi-VN')} đ</td>
+              <td>${c.payDot1.toLocaleString('vi-VN')} đ (${c.payMethod1 || '--'})</td>
+              <td>${c.payDot2.toLocaleString('vi-VN')} đ (${c.payMethod2 || '--'})</td>
+              <td>${c.payDot3.toLocaleString('vi-VN')} đ (${c.payMethod3 || '--'})</td>
+              <td style="color:var(--success); font-weight:bold;">${c.paid.toLocaleString('vi-VN')} đ</td>
+              <td style="color:var(--danger); font-weight:bold;">${c.remain.toLocaleString('vi-VN')} đ</td>
+            </tr>
+          `;
+        });
+
+        const tableId = `reportTable_${idx}`;
+        const sectionCard = document.createElement('div');
+        sectionCard.className = 'table-container';
+        sectionCard.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; cursor: pointer;" onclick="toggleTableCollapse('${tableId}')" title="Bấm để ẩn/hiện danh sách khách hàng">
+            <h3 style="color: var(--primary);">📅 Chi Tiết Khách Hàng: ${monthKey}</h3>
+            <div style="font-size: 0.9rem; font-weight: bold; color: #2d3748;">
+              Số hợp đồng: <span style="color:#d69e2e;">${list.length}</span> | Doanh thu: <span style="color: #2b6cb0;">${mTotalRev.toLocaleString('vi-VN')} đ</span> | Đã thu: <span style="color: var(--success);">${mTotalPaid.toLocaleString('vi-VN')} đ</span>
+            </div>
+          </div>
+          <div id="${tableId}" style="display: block;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mã HĐ</th>
+                  <th>Mã Gói</th>
+                  <th>Khách Hàng</th>
+                  <th>Sale Chốt HĐ</th>
+                  <th>Ngày Chốt (Cọc)</th>
+                  <th>Tổng Giá Trị</th>
+                  <th>Đợt 1 (Cọc)</th>
+                  <th>Đợt 2 (Chụp)</th>
+                  <th>Đợt 3 (Thanh Lý)</th>
+                  <th>Đã Thu</th>
+                  <th>Còn Lại</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+        `;
+        container.appendChild(sectionCard);
+      });
+    }
+
+    function toggleTableCollapse(tableId) {
+      const el = document.getElementById(tableId);
+      if (el) {
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+
+    function showStatDetailModal(type, targetParam = null) {
+      const filterStaff = document.getElementById('reportFilterStaff').value;
+      const modal = document.getElementById('statDetailModal');
+      const titleEl = document.getElementById('statDetailTitle');
+      const contentEl = document.getElementById('statDetailContent');
+
+      let filteredContracts = contracts.filter(c => {
+        const staffList = Array.isArray(c.assigneeStaffs) ? c.assigneeStaffs : (c.assigneeStaff ? [c.assigneeStaff] : []);
+        return !filterStaff || staffList.includes(filterStaff);
+      });
+
+      if (type === 'leads') {
+        titleEl.innerText = "Chi Tiết Danh Sách Lead Khách Hàng CRM";
+        let rows = customers.map(c => `
+          <tr class="clickable-row" onclick="closeStatDetailModal(); openDetailModal('${c.id}');">
+            <td><strong>${escapeHtml(c.name)}</strong></td>
+            <td>${c.phone}</td>
+            <td>${c.dueDate || '--'}</td>
+            <td>${(c.assignees || []).join(', ') || '--'}</td>
+            <td>${escapeHtml(c.note || '--')}</td>
+          </tr>
+        `).join('');
+
+        contentEl.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Tên Khách Hàng</th>
+                <th>Số Điện Thoại</th>
+                <th>Hạn Push</th>
+                <th>Sale Phụ Trách</th>
+                <th>Ghi Chú</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="5" style="text-align:center;">Không có dữ liệu</td></tr>'}</tbody>
+          </table>
+        `;
+      } else {
+        let list = filteredContracts;
+
+        if (type === 'staff_kpi' && targetParam) {
+          titleEl.innerText = `Danh Sách Hợp Đồng Có Sự Tham Gia Của Sale: ${targetParam}`;
+          list = contracts.filter(c => {
+            const staffList = Array.isArray(c.assigneeStaffs) ? c.assigneeStaffs : (c.assigneeStaff ? [c.assigneeStaff] : []);
+            return staffList.includes(targetParam);
+          });
+        } else if (type === 'month_group' && targetParam) {
+          titleEl.innerText = `Chi Tiết Khách Hàng & Doanh Thu (${targetParam})`;
+          list = filteredContracts.filter(c => {
+            const pDate = c.payDate1 || c.shootDate;
+            if (!pDate) return targetParam === "Chưa có ngày chốt";
+            const parts = pDate.split('-');
+            if (parts.length === 3) {
+              return `Tháng ${parts[1]} / ${parts[0]}` === targetParam;
+            }
+            return false;
+          });
+        } else if (type === 'bookings') titleEl.innerText = "Chi Tiết Tất Cả Hợp Đồng (Booking)";
+        else if (type === 'revenue') titleEl.innerText = "Chi Tiết Tổng Doanh Thu Toàn Bộ Hợp Đồng";
+        else if (type === 'paid') titleEl.innerText = "Chi Tiết Tiền Đã Thu Của Tất Cả Khách Hàng";
+        else if (type === 'remaining') titleEl.innerText = "Chi Tiết Dư Nợ Còn Lại Phải Thu";
+
+        let rows = list.map(c => {
+          const val = Number(c.value || 0);
+          const d1 = Number(c.payDot1 || 0);
+          const d2 = Number(c.payDot2 || 0);
+          const d3 = Number(c.payDot3 || 0);
+          const paid = Number(c.paid || (d1 + d2 + d3));
+          const remain = val - paid;
+          const bName = c.brideName || '...';
+          const gName = c.groomName || '...';
+          const staffList = Array.isArray(c.assigneeStaffs) ? c.assigneeStaffs.join(', ') : (c.assigneeStaff || '--');
+
+          return `
+            <tr class="clickable-row" onclick="closeStatDetailModal(); openContractModal('${c.id}');" title="Bấm để mở hợp đồng">
+              <td><strong>${c.contractCode}</strong></td>
+              <td><span style="background:#edf2f7; padding:2px 6px; border-radius:4px;">${c.packageCode || 'PRE'}</span></td>
+              <td>${escapeHtml(bName)} - ${escapeHtml(gName)}</td>
+              <td>${escapeHtml(staffList)}</td>
+              <td>${c.payDate1 || c.shootDate || '--'}</td>
+              <td style="font-weight:bold;">${val.toLocaleString('vi-VN')} đ</td>
+              <td style="color:var(--success); font-weight:bold;">${paid.toLocaleString('vi-VN')} đ</td>
+              <td style="color:var(--danger); font-weight:bold;">${remain.toLocaleString('vi-VN')} đ</td>
+            </tr>
+          `;
+        }).join('');
+
+        contentEl.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Mã HĐ</th>
+                <th>Mã Gói</th>
+                <th>Khách Hàng</th>
+                <th>Sale Chốt HĐ</th>
+                <th>Ngày Chốt (Cọc)</th>
+                <th>Tổng Giá Trị</th>
+                <th>Đã Thu</th>
+                <th>Còn Lại</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="8" style="text-align:center;">Không có dữ liệu hợp đồng</td></tr>'}</tbody>
+          </table>
+        `;
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeStatDetailModal() {
+      document.getElementById('statDetailModal').style.display = 'none';
+    }
+
+    function getLocationAndProcess(callback) {
+      if (!navigator.geolocation) return callback("Không GPS");
+      navigator.geolocation.getCurrentPosition(
+        pos => callback(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`),
+        () => callback("Lỗi GPS"),
+        { timeout: 10000 }
+      );
+    }
+    function handleCheckIn() {
+      const staffName = document.getElementById('staffSelect').value;
+      if (!staffName) return alert('Chọn nhân viên!');
+      const today = new Date().toLocaleDateString('vi-VN');
+      getLocationAndProcess(loc => {
+        const now = new Date();
+        attendanceData.unshift({ type: 'attendance', id: Date.now().toString(), staffName, date: today, checkIn: now.toLocaleTimeString('vi-VN'), checkInLocation: loc, checkInTimestamp: now.getTime() });
+        localStorage.setItem('crm_attendance', JSON.stringify(attendanceData));
+        renderAttendance();
+        alert('Check-in thành công!');
+      });
+    }
+    function handleCheckOut() {
+      const staffName = document.getElementById('staffSelect').value;
+      const today = new Date().toLocaleDateString('vi-VN');
+      const active = attendanceData.find(a => a.staffName === staffName && a.date === today && !a.checkOut);
+      if (!active) return alert('Không tìm thấy ca đang mở!');
+      getLocationAndProcess(loc => {
+        const now = new Date();
+        active.checkOut = now.toLocaleTimeString('vi-VN');
+        active.checkOutLocation = loc;
+        active.duration = `${((now.getTime() - active.checkInTimestamp)/(3600000)).toFixed(2)} giờ`;
+        localStorage.setItem('crm_attendance', JSON.stringify(attendanceData));
+        renderAttendance();
+        alert('Check-out thành công!');
+      });
+    }
+    function renderAttendance() {
+      const tbody = document.getElementById('attendanceLogs');
+      tbody.innerHTML = attendanceData.length ? '' : '<tr><td colspan="5" style="text-align:center;">Chưa có dữ liệu.</td></tr>';
+      attendanceData.forEach(log => {
+        tbody.innerHTML += `<tr><td><strong>${escapeHtml(log.staffName)}</strong></td><td>${log.checkIn} (${log.checkInLocation})</td><td>${log.checkOut || '--'}</td><td>${log.duration || 'Đang làm'}</td><td><button class="btn-delete" onclick="deleteAttendance('${log.id}')">Xóa</button></td></tr>`;
+      });
+    }
+    function deleteAttendance(id) { attendanceData = attendanceData.filter(a => a.id !== id); localStorage.setItem('crm_attendance', JSON.stringify(attendanceData)); renderAttendance(); }
+
+    function renderUsers() {
+      const tbody = document.getElementById('userList');
+      tbody.innerHTML = '';
+      users.forEach((u, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${u.username}</td>
+            <td><strong>${u.name}</strong></td>
+            <td>${u.role === 'admin' ? '<span style="color:#d69e2e; font-weight:bold;">Quản lý</span>' : 'Sale (N/V)'}</td>
+            <td><input type="text" id="pass_${index}" value="${u.password}" style="padding: 6px; width: 140px; border: 1px solid #ccc; border-radius: 4px;"></td>
+            <td>
+              <button class="btn-add" style="padding: 6px 12px; font-size: 0.8rem;" onclick="updatePassword(${index})">Lưu MK</button>
+              ${u.username !== 'admin' ? `<button class="btn-delete" style="margin-left: 10px;" onclick="deleteUser(${index})">Xóa</button>` : ''}
+            </td>
+          </tr>
+        `;
+      });
+    }
+    function updatePassword(index) {
+      const newPass = document.getElementById(`pass_${index}`).value.trim();
+      if (!newPass) return alert("Mật khẩu không được để trống!");
+      users[index].password = newPass;
+      localStorage.setItem('crm_users', JSON.stringify(users));
+      alert(`Đã đổi mật khẩu thành công cho tài khoản: ${users[index].username}`);
+      renderUsers();
+    }
+    function addUser(e) {
+      e.preventDefault();
+      const u = document.getElementById('newUsername').value.trim();
+      const n = document.getElementById('newFullName').value.trim();
+      const p = document.getElementById('newPassword').value.trim();
+      const r = document.getElementById('newRole').value;
+      if (users.some(x => x.username.toLowerCase() === u.toLowerCase())) return alert('Tên đăng nhập đã tồn tại!');
+      users.push({ username: u, name: n, password: p, role: r });
+      localStorage.setItem('crm_users', JSON.stringify(users));
+      renderUsers(); alert('Tạo tài khoản thành công!'); e.target.reset();
+    }
+    function deleteUser(index) {
+      if (confirm('Xóa tài khoản này?')) {
+        users.splice(index, 1);
+        localStorage.setItem('crm_users', JSON.stringify(users));
+        renderUsers();
+      }
+    }
+
+    function escapeHtml(text) { return text ? text.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : ''; }
+  </script>
+</body>
+</html>
